@@ -1,23 +1,48 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { FlatList } from 'react-native';
+
+// Import getNews function from news.js
+import { getNews } from './src/news';
+// Import article component from Article.js
+import Article from './src/components/Article';
 
 export default class App extends React.Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
-    );
-  }
-}
+    constructor(props) {
+        super(props);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+        this.state = { articles: [],
+            refreshing: true };
+
+        this.fetchNews = this.fetchNews.bind(this);
+    }
+    componentDidMount() {
+        this.fetchNews();
+    }
+
+    fetchNews() {
+        getNews()
+            .then(articles => this.setState({ articles, refreshing: false }))
+            .catch(() => this.setState({ refreshing: false }));
+    }
+
+    handleRefresh() {
+        this.setState(
+            {
+                refreshing: true
+            },
+            () => this.fetchNews()
+        );
+    }
+
+    render() {
+        return (
+            <FlatList
+                data={ this.state.articles }
+                renderItem={({ item }) => <Article article={ item } />}
+                keyExtractor={ item => item.url }
+                refreshing={ this.state.refreshing }
+                onRefresh={ this.handleRefresh.bind(this) }
+            />
+        );
+    }
+}
